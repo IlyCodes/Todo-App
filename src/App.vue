@@ -1,118 +1,129 @@
+<template>
+
+	<div class="app">
+
+		<Sidebar :toggle="ToggleSidebar" :class="`${ is_expanded ? 'expanded' : 'not_expanded' }`" />
+
+		<div class="main">
+			<RouterView
+				:todo_asc="todo_asc"
+				@addTodo="updateTodo($event)"
+				@removeTodo="deleteTodo($event)"
+			/>
+		</div>
+
+	</div>
+
+</template>
+
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import Sidebar from './components/Sidebar.vue'
+import { onMounted, ref, watch } from 'vue';
+import { RouterView } from 'vue-router'
 
-const todos = ref([])
-const name = ref('')
+var todo_asc = ref([])
 
-const input_content = ref('')
-const input_category = ref(null)
+const is_expanded = ref(false)
 
-const todo_asc = computed(() => todos.value.sort((a, b) => {
+const ToggleSidebar = () => {
+	is_expanded.value = !is_expanded.value
+}
 
-	return b.createdAt - a.createdAt
+const updateTodo = (arg) => {
+	todo_asc.value = arg.value
+}
 
-}))
+const deleteTodo = (arg) => {
+	todo_asc.value = arg.value
+}
 
-watch(todos, (newVal) => {
-	localStorage.setItem('todos', JSON.stringify(newVal))
+watch(todo_asc, (newVal) => {
+  localStorage.setItem('todos', JSON.stringify(newVal))
 }, { deep: true })
 
-watch(name, (newVal) => localStorage.setItem('name', newVal))
-
-
 onMounted(() => {
-	name.value = localStorage.getItem('name') || ''
-	todos.value = JSON.parse(localStorage.getItem('todos')) || []
+	todo_asc.value = JSON.parse(localStorage.getItem('todos')) || []
 })
-
-const addTodo = () => {
-
-	if ( input_content.value.trim() === '' || input_category.value === null ) {
-		return
-	}
-
-	todos.value.push({
-
-		content: input_content.value,
-		category: input_category.value,
-		createdAt: new Date().getTime(),
-		done: false
-
-	})
-
-	input_content.value = ''
-	input_category.value = null
-
-}
-
-const removeTodo = (todo) => {
-	todos.value = todos.value.filter( t => t !== todo)
-}
-
 
 </script>
 
-<template>
-	<main class="app">
 
-		<section>
+<style lang="scss">
 
-			<div class="greeting">
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	color: black;
+	font-family: 'Roboto', sans-serif;
+}
 
-				<h1>
-					What's up,
-					<input type="text" placeholder="Name" v-model="name" />
-				</h1>
+.app {
+	display: flex;
+}
 
-			</div>
+.main {
+	padding: 10px;
+}
 
-			<form @submit.prevent="addTodo">
+span {
+	&.menu {
+		text-align: center;
+	}
+    cursor: pointer;
+	&.delete {
+		font-size: 16px;
+		color: red;
+	}
+}
 
-				<div class="create-todo">
+aside {
+	width: 130px;
+	height: 100vh;
+	display: flex;
+    flex-direction: column;
+    background-color: gray;
+}
 
-					<h3>CREATE TODO</h3>
-					<span>What's on your todo list?</span><br>
-					<input type="text" placeholder="e.g. make a video" v-model="input_content" />
+.not_expanded {
+	width: 40px;
+	span{
+		&.menu_open {
+			display: none;
+		}
+		&.icon {
+			font-size: x-large;
+		}
+	}
+	p {
+        &.viewName {
+            display: none;
+        }
+    }
+}
 
-				</div><br>
-
-				<div class="category">
-
-					<span>Pick a category</span>
-					<div>
-						<input type="radio" name="category" value="business" v-model="input_category" /><b>Business</b>
-						<input type="radio" name="category" value="personal" v-model="input_category" /><b>Personal</b>
-					</div>
-
-				</div><br>
-
-				<div class="addTodo">
-					<input type="submit" value="Add Todo">
-				</div>
-
-			</form>
-
-		</section><br>
-
-		<section class="todolist">
-
-			<span>TODO LIST</span>
-			<br><br>
-
-			<div v-for="(todo, i) in todo_asc" :key="i" :class="`${todo.done && 'done' ? 'todo-item' : '' }`">
-
-				<input type="checkbox" v-model="todo.done" />
-				<input type="text" v-model="todo.content" />
-				<button @click="removeTodo(todo)">DELETE</button><br>
-
-			</div>
-
-		</section>
-
-	</main>
-</template>
-
-<style>
+.expanded {
+	position: relative;
+    left: 0; top: 0;
+    span{
+		&.menu {
+			visibility: hidden;
+		}
+		&.menu_open {
+			position: absolute;
+			right: 0; top: 0;
+			cursor: pointer;
+		}
+	}
+	div {
+		&.navbar {
+			margin-left: 15px;
+			nav {
+				align-items: flex-start;
+			}
+		}
+	}
+}
 
 .greeting input {
 	
@@ -130,7 +141,19 @@ const removeTodo = (todo) => {
 
 }
 
-.todo-item {
+.todo-item
+{
+	display: flex;
+	align-items: center;
+	padding: 2px;
+}
+
+.todo-item2
+{
+	display: none;
+}
+
+.todo-done {
 
 	display: flex;
 	align-items: center;
@@ -138,22 +161,13 @@ const removeTodo = (todo) => {
 	background-color: lightgreen;
 	padding: 2px;
 	border-radius: 2px;
-
-}
-
-.todo-item input {
-	background: transparent;
-	border: none;
-	text-decoration: line-through;
-}
-
-.todo-item input:focus {
-	outline: none;
-	border: none
-}
-
-.todo-item button {
-	font-size: x-small;
+	.content {
+		margin-right: 20px;
+		text-decoration: line-through;
+	}
+	button {
+		font-size: x-small;
+	}
 }
 
 </style>
